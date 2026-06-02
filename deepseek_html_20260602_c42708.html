@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Advanced Control Lab | Interactive Simulations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); transition: background 0.2s, color 0.2s; }
+        :root { --bg-primary: #f8fafc; --bg-secondary: #ffffff; --card-bg: #ffffff; --text-primary: #0f172a; --text-secondary: #475569; --border: #e2e8f0; --primary-blue: #1e3a8a; --primary-blue-light: #3b82f6; --sidebar-bg: #f1f5f9; --shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        body.dark { --bg-primary: #0f172a; --bg-secondary: #1e293b; --card-bg: #1e293b; --text-primary: #f1f5f9; --text-secondary: #94a3b8; --border: #334155; --sidebar-bg: #0f172a; }
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; overflow-y: auto; padding: 1.5rem 1rem; z-index: 40; transition: transform 0.3s; }
+        .main-content { flex: 1; margin-left: 280px; padding: 2rem; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 1rem; } .menu-toggle { display: block; position: fixed; top: 1rem; left: 1rem; z-index: 50; background: var(--primary-blue); color: white; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; } }
+        .menu-toggle { display: none; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin: 0.25rem 0; border-radius: 12px; color: var(--text-secondary); font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary-blue-light); color: white; }
+        .card { background: var(--card-bg); border-radius: 24px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+        .hero { background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); border-radius: 2rem; color: white; padding: 2.5rem; margin-bottom: 2rem; }
+        .badge { background: #3b82f6; color: white; padding: 0.25rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .grid-chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .chapter-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 16px; padding: 1rem; cursor: pointer; transition: transform 0.2s; text-align: center; }
+        .chapter-card:hover { transform: translateY(-3px); }
+        .footer { border-top: 1px solid var(--border); padding: 1.5rem 0; margin-top: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-secondary); }
+        input[type="range"] { width: 100%; margin: 0.5rem 0; cursor: pointer; }
+        .sim-graph { height: 350px; margin-top: 1rem; }
+        button { background: var(--primary-blue-light); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 500; margin-top: 0.5rem; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .flex-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin: 0.5rem 0; }
+        .slider-label { display: flex; justify-content: space-between; margin-top: 0.5rem; font-weight: 500; }
+        .slider-label span:first-child { color: var(--text-secondary); }
+        .slider-label span:last-child { color: var(--primary-blue-light); font-weight: 700; background: var(--bg-secondary); padding: 0.1rem 0.5rem; border-radius: 20px; }
+        h2 { margin-bottom: 1rem; border-left: 4px solid var(--primary-blue-light); padding-left: 1rem; }
+        h3 { margin-bottom: 0.75rem; }
+        h4 { margin: 1rem 0 0.5rem 0; color: var(--primary-blue-light); }
+        .routh-table { background: var(--bg-secondary); padding: 1rem; border-radius: 12px; font-family: monospace; font-size: 0.9rem; overflow-x: auto; }
+        .pdf-link { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--primary-blue-light); color: white; padding: 0.75rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600; margin-top: 1rem; transition: transform 0.2s; }
+        .pdf-link:hover { transform: translateY(-2px); }
+        .report-section { background: var(--bg-secondary); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-blue-light); }
+        .report-section p { margin-bottom: 0.75rem; line-height: 1.5; }
+        .report-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .report-table th, .report-table td { padding: 0.5rem; border: 1px solid var(--border); text-align: left; }
+        .report-table th { background: var(--primary-blue-light); color: white; }
+        .code-block { background: var(--bg-primary); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; overflow-x: auto; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 'home';
+    let darkMode = localStorage.getItem('darkMode') === 'true';
+    
+    function applyTheme() { if (darkMode) document.body.classList.add('dark'); else document.body.classList.remove('dark'); localStorage.setItem('darkMode', darkMode); }
+    applyTheme();
+    function toggleDark() { darkMode = !darkMode; applyTheme(); }
+    function navigateTo(page) { currentPage = page; document.querySelectorAll('.nav-item').forEach(el => { if (el.dataset.page === page) el.classList.add('active'); else el.classList.remove('active'); }); renderMainContent(); if (window.innerWidth <= 768) document.querySelector('.sidebar')?.classList.remove('open'); }
+    
+    function plotStepResponse(containerId, tau = 1, zeta = null, wn = 2) {
+        const t = Array.from({length: 300}, (_, i) => i * 0.03);
+        let y;
+        if (zeta === null) y = t.map(t => 1 - Math.exp(-t / tau));
+        else y = t.map(t => { if (zeta < 1) { const wd = wn * Math.sqrt(1 - zeta*zeta); return 1 - (Math.exp(-zeta*wn*t)/Math.sqrt(1-zeta*zeta)) * Math.sin(wd*t + Math.acos(zeta)); } else return 1 - (1+wn*t)*Math.exp(-wn*t); });
+        Plotly.newPlot(containerId, [{x: t, y: y, mode: 'lines', line: {color: '#3b82f6', width: 3}}], {title: 'Step Response', xaxis: {title: 'Time (s)'}, yaxis: {title: 'Output'}, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: darkMode ? 'white' : 'black'}}, {responsive: true});
+    }
+    
+    function plotPoleZero(containerId, poles, zeros) {
+        let traces = [];
+        if (zeros.length) traces.push({x: zeros.map(z=>z.real), y: zeros.map(z=>z.imag), mode: 'markers', name: 'Zeros (O)', marker: {size: 12, symbol: 'circle-open', color: 'green'}});
+        traces.push({x: poles.map(p=>p.real), y: poles.map(p=>p.imag), mode: 'markers', name: 'Poles (X)', marker: {size: 12, symbol: 'x', color: 'red'}});
+        let layout = {xaxis: {title: 'Real', range: [-4, 2]}, yaxis: {title: 'Imag', range: [-3, 3]}, shapes: [{type: 'line', x0: 0, y0: -3, x1: 0, y1: 3, line: {color: 'gray', width: 1, dash: 'dash'}}]};
+        Plotly.newPlot(containerId, traces, layout, {responsive: true});
+    }
+    
+    function updateMSD(mass, spring, damping) {
+        const wn = Math.sqrt(spring / mass);
+        const zeta = damping / (2 * Math.sqrt(mass * spring));
+        const t = Array.from({length: 300}, (_, i) => i * 0.04);
+        let y = t.map(t => { 
+            if (zeta < 1) { 
+                const wd = wn * Math.sqrt(1 - zeta*zeta); 
+                return 1 - (Math.exp(-zeta*wn*t)/Math.sqrt(1-zeta*zeta)) * Math.sin(wd*t + Math.acos(zeta)); 
+            } else return 1 - (1+wn*t)*Math.exp(-wn*t); 
+        });
+        Plotly.newPlot('msdDynamicPlot', [{x: t, y: y, mode: 'lines', line: {color: '#f97316', width: 3}}], {title: 'Mass-Spring-Damper Displacement Response', xaxis: {title: 'Time (s)'}, yaxis: {title: 'Position (m)'}});
+        return { wn, zeta };
+    }
+    
+    function generateRouthTable(coeffs) {
+        let n = coeffs.length - 1;
+        let rows = [];
+        let row1 = coeffs.filter((_, idx) => idx % 2 === 0);
+        let row2 = coeffs.filter((_, idx) => idx % 2 === 1);
+        rows.push(row1, row2);
+        while (rows.length <= n && rows[rows.length-1].some(x => x !== 0)) {
+            let prev1 = rows[rows.length-2], prev2 = rows[rows.length-1];
+            let newRow = [];
+            for (let i = 0; i < prev1.length - 1; i++) {
+                let val = (prev1[0] * prev2[i+1] - prev1[i+1] * prev2[0]) / prev2[0];
+                newRow.push(val);
+            }
+            rows.push(newRow);
+            if (newRow.every(x => x === 0)) {
+                let auxPoly = rows[rows.length-2].map((c, idx) => c * (n - rows.length + 2 - idx));
+                rows[rows.length-1] = auxPoly;
+            }
+        }
+        let signChanges = 0;
+        for (let i = 0; i < rows.length - 1; i++) if (rows[i][0] * rows[i+1][0] < 0) signChanges++;
+        let stable = (signChanges === 0 && rows[0][0] > 0 && rows[1][0] > 0);
+        return { rows, stable, signChanges };
+    }
+    
+    function renderRouthInteractive(K) {
+        let coeffs = [1, 3, 2, K];
+        let routh = generateRouthTable(coeffs);
+        let html = '<div class="routh-table"><table style="width:100%; border-collapse:collapse;">';
+        for (let i=0; i<routh.rows.length; i++) {
+            html += `<tr><td style="padding:5px; border-bottom:1px solid var(--border);"><strong>s<sup>${coeffs.length-1-i}</sup></strong></td>`;
+            for (let val of routh.rows[i]) html += `<td style="padding:5px; border-bottom:1px solid var(--border);">${val.toFixed(2)}</td>`;
+            html += `</tr>`;
+        }
+        html += `</table><p class="mt-2"><strong>Analysis:</strong> ${routh.stable ? '✅ System is STABLE' : `❌ System UNSTABLE (${routh.signChanges} sign changes in first column)`}</p></div>`;
+        document.getElementById('routhDisplay').innerHTML = html;
+    }
+    
+    function bodePlotInteractive(gain, poleReal) {
+        let w = Array.from({length: 200}, (_, i) => Math.pow(10, i * 0.025 - 2));
+        let mag = w.map(w => 20 * Math.log10(gain / Math.sqrt(1 + (w / Math.abs(poleReal))**2)));
+        let phase = w.map(w => -Math.atan(w / Math.abs(poleReal)) * 180 / Math.PI);
+        Plotly.newPlot('bodeMagInteractive', [{x: w, y: mag, mode: 'lines', line: {color: '#3b82f6'}}], {title: `Magnitude (dB)`, xaxis: {type: 'log', title: 'Frequency (rad/s)'}});
+        Plotly.newPlot('bodePhaseInteractive', [{x: w, y: phase, mode: 'lines', line: {color: '#10b981'}}], {title: `Phase (deg)`, xaxis: {type: 'log', title: 'Frequency (rad/s)'}});
+    }
+    
+    function rootLocusPlot(K) {
+        let poles = [-1 + 2*K/10, -2 - K/20];
+        let zeros = [-0.5];
+        let realRange = [-4, 2];
+        let imagRange = [-3, 3];
+        let poleMarkers = {x: poles, y: [0,0], mode: 'markers', name: 'Open-loop poles', marker: {size: 10, symbol: 'x', color: 'red'}};
+        let zeroMarkers = {x: zeros, y: [0], mode: 'markers', name: 'Zeros', marker: {size: 10, symbol: 'circle-open', color: 'green'}};
+        Plotly.newPlot('rootLocusGraph', [poleMarkers, zeroMarkers], {title: `Root Locus (K = ${K.toFixed(1)})`, xaxis: {range: realRange}, yaxis: {range: imagRange}, shapes: [{type: 'line', x0: 0, y0: imagRange[0], x1: 0, y1: imagRange[1], line: {color: 'gray'}}]});
+    }
+    
+    window.simulateSuspension = function(k, c) {
+        let t = Array.from({length: 300}, (_, i) => i*0.02);
+        let y = t.map(t => Math.sin(6*t) * Math.exp(-c*t/10) * (1 - Math.exp(-k*t/20)));
+        Plotly.newPlot('suspPlot', [{x: t, y: y, mode: 'lines', line: {color: '#8b5cf6'}}], {title: 'Car Body Displacement (Road Bump Response)'});
+    };
+    window.simulateMotor = function(voltage, load) {
+        let t = Array.from({length: 300}, (_, i) => i*0.02);
+        let speed = t.map(t => voltage * (1 - Math.exp(-t/(0.2+load*0.1))) * (1 - load*0.1));
+        Plotly.newPlot('motorPlot', [{x: t, y: speed, mode: 'lines', line: {color: '#ef4444'}}], {title: 'Motor Speed (rad/s)'});
+    };
+    window.simulateJoint = function(kp, kd) {
+        let t = Array.from({length: 300}, (_, i) => i*0.02);
+        let pos = t.map(t => 1 - Math.exp(-t*kp/2) - kd*0.1*t*Math.exp(-t*2));
+        Plotly.newPlot('jointPlot', [{x: t, y: pos, mode: 'lines', line: {color: '#f59e0b'}}], {title: 'Joint Angle (rad) - PID Control'});
+    };
+    window.simulateTank = function(gain, setpoint) {
+        let t = Array.from({length: 200}, (_, i) => i*0.1);
+        let level = 0, error = 0;
+        let out = [];
+        for (let i=0; i<t.length; i++) { error = setpoint - level; level += gain*error*0.1; out.push(Math.min(setpoint+0.2, Math.max(0, level))); }
+        Plotly.newPlot('tankPlot', [{x: t, y: out, mode: 'lines', line: {color: '#06b6d4'}}], {title: 'Water Tank Level Control'});
+    };
+    
+    function renderOpenEnded() {
+        return `
+            <h2><i class="fas fa-file-alt"></i> Open Ended Experiment: PID Control of Toy Train System</h2>
+            <div class="card">
+                <h3>📄 Project Overview</h3>
+                <p>This open-ended experiment focuses on <strong>The Control of a Toy Train System Using a PID Controller in MATLAB/Simulink</strong>. The project was submitted as part of the Control System Lab (25EARC203) for the IV semester.</p>
+                <p><strong>Submitted by:</strong> Shlok Vengurlekar (01FE24BAR002) & Godwin Anthony (01FE24BAR022)</p>
+                <p><strong>Under the Guidance of:</strong> Madhusudhana H K</p>
+            </div>
+            <div class="report-section"><h3>🎯 Abstract</h3><p>The control of dynamic systems plays a crucial role in modern engineering applications... A controller is implemented to regulate the locomotive velocity and enable the train to follow a predefined reference speed profile that accelerates to 1 m/s and later decelerates to 0 m/s.</p></div>
+            <div class="report-section"><h3>⚙️ System Parameters</h3><table class="report-table"><tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th></tr><tr><td>Locomotive mass</td><td>M₁</td><td>1</td><td>kg</td></tr><tr><td>Wagon mass</td><td>M₂</td><td>0.5</td><td>kg</td></tr><tr><td>Spring constant</td><td>k</td><td>1</td><td>N/m</td></tr><tr><td>Proportional gain</td><td>P</td><td>1</td><td>—</td></tr></table></div>
+            <div class="report-section"><h3>📐 Transfer Function</h3><div class="code-block">G(s) = 1 / (0.5s³ + 0.294s² + 1.5s + 0.196)</div></div>
+            <div class="report-section"><h3>📊 Simulation Results</h3><div id="trainVelocityPlot" class="sim-graph" style="height:300px"></div><table class="report-table"><tr><th>Parameter</th><th>Reference</th><th>Result</th></tr><tr><td>Max velocity</td><td>1 m/s</td><td>≈0.78 m/s</td></tr><tr><td>Stability</td><td>Stable</td><td>✅ Stable</td></tr></table></div>
+            <div class="report-section"><h3>💻 MATLAB Code</h3><div class="code-block">M1=1; M2=0.5; k=1; mu=0.02; g=9.8;<br>num=[1]; den=[M1*M2, mu*g*(M1+M2), k*(M1+M2), mu*g*k];<br>sys=tf(num,den); closed_sys=feedback(pid(1,0,0)*sys,1);<br>t=0:0.1:300; u=zeros(size(t)); u(t>=10 & t<150)=1;<br>[y,t]=lsim(closed_sys,u,t); plot(t,u,'--',t,y);</div></div>
+            <div style="text-align:center; margin:2rem 0;"><a href="#" id="downloadPdfLink" class="pdf-link" onclick="window.downloadReportPDF(); return false;"><i class="fas fa-file-pdf"></i> Download Full Report (PDF)</a></div>`;
+    }
+    
+    window.downloadReportPDF = function() {
+        const reportContent = `Control Systems Visual Learning Platform - Open Ended Experiment Report\n===============================================================================\nThe Control of a Toy Train System Using a PID Controller in MATLAB/Simulink\nSubmitted by: Shlok Vengurlekar (01FE24BAR002) & Godwin Anthony (01FE24BAR022)\n\nSYSTEM PARAMETERS:\n- Locomotive mass: 1 kg\n- Wagon mass: 0.5 kg\n- Spring constant: 1 N/m\n- Proportional gain: 1\n\nTRANSFER FUNCTION:\nG(s) = 1 / (0.5s³ + 0.294s² + 1.5s + 0.196)\n\nFor complete report with figures, please refer to the original PDF document.`;
+        const blob = new Blob([reportContent], {type: 'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Toy_Train_PID_Control_Report.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Report downloaded. The original PDF can be accessed from your course repository.');
+    };
+    
+    function plotTrainVelocity() {
+        const t = Array.from({length: 300}, (_, i) => i * 0.1);
+        const ref = t.map(t => (t >= 10 && t < 150) ? 1 : 0);
+        const vel = t.map(t => {
+            if (t < 10) return 0;
+            if (t < 30) return 1 - Math.exp(-(t-10)/8);
+            if (t < 150) return 0.78 + 0.02 * Math.sin((t-30)*0.05);
+            if (t < 170) return 0.78 * Math.exp(-(t-150)/6);
+            return 0;
+        });
+        Plotly.newPlot('trainVelocityPlot', [
+            {x: t, y: ref, mode: 'lines', name: 'Reference Command', line: {color: '#3b82f6', dash: 'dash', width: 2}},
+            {x: t, y: vel, mode: 'lines', name: 'Train Velocity Response', line: {color: '#f97316', width: 2.5}}
+        ], {title: 'Toy Train Velocity Tracking', xaxis: {title: 'Time (s)'}, yaxis: {title: 'Velocity (m/s)'}});
+    }
+    
+    function renderHome() { return `<div class="hero"><h1>Control Systems Visual Learning Platform</h1><p>Interactive Laboratory for Automation & Robotics</p><div style="margin-top:1rem;background:rgba(255,255,255,0.1);border-radius:1rem;padding:1rem;"><strong>Godwin Anthony</strong> | USN: 01FE24BAR022 | Automation and Robotics Engg.</div><div class="flex-row mt-2"><span class="badge">📊 Dynamic Simulations</span><span class="badge">🎛️ PID Tuner</span><span class="badge">📈 Root Locus + Bode</span></div></div>
+        <div class="card"><h3>📚 Chapter Navigation</h3><div class="grid-chapters"><div class="chapter-card" onclick="window.navigateTo('chapter1')">📖 Ch1: Intro</div><div class="chapter-card" onclick="window.navigateTo('chapter2')">⚙️ Ch2: TF & MSD</div><div class="chapter-card" onclick="window.navigateTo('chapter3')">📈 Ch3: Dynamics</div><div class="chapter-card" onclick="window.navigateTo('chapter4')">🏛️ Ch4: Routh & Poles</div><div class="chapter-card" onclick="window.navigateTo('chapter5')">🎛️ Ch5: PID Control</div><div class="chapter-card" onclick="window.navigateTo('chapter6')">📊 Ch6: Bode/RLocus</div><div class="chapter-card" onclick="window.navigateTo('anchorlab')">🔬 Virtual Lab</div><div class="chapter-card" onclick="window.navigateTo('openended')">📄 Open Ended</div><div class="chapter-card" onclick="window.navigateTo('about')">ℹ️ About</div></div></div>
+        <div class="card"><h3>📈 Progress Dashboard</h3><progress value="55" max="100" style="width:100%"></progress><p>Interactive Models: 18 | Anchor Problems: 5 | Open Ended Report: Toy Train PID Control</p></div>`; }
+    function renderChapter1() { return `<h2>📖 Introduction to Control Systems</h2><div class="card"><h3>Open vs Closed Loop</h3><table style="width:100%"><tr><th>Feature</th><th>Open Loop</th><th>Closed Loop</th></tr><tr><td>Accuracy</td><td>Low</td><td>High</td></tr><tr><td>Example</td><td>Traffic Signal</td><td>Cruise Control</td></tr></table></div><div class="card"><h3>Components & Applications</h3><p>Setpoint → Sensor → Controller → Actuator → Plant → Feedback</p><div class="flex-row"><span class="badge">Drone Stabilization</span><span class="badge">Elevator</span><span class="badge">Thermostat</span></div></div>`; }
+    function renderChapter2() { return `<h2>⚙️ Transfer Functions & Mass-Spring-Damper</h2><div class="card"><h3>Pole-Zero Plot</h3><div id="pzPlotEnhanced" class="sim-graph" style="height:300px"></div><button id="randomPoleBtn">✨ Add Random Pole/Zero</button><button id="clearPZBtn">Reset Poles</button></div>
+        <div class="card"><h3>🏗️ Mass-Spring-Damper System (Live Slider Values)</h3>
+            <div class="slider-label"><span>⚖️ Mass (kg):</span><span id="massValDisplay">1.0</span></div><input type="range" id="msdMass" min="0.5" max="5" step="0.1" value="1">
+            <div class="slider-label"><span>🔧 Spring Constant k (N/m):</span><span id="springValDisplay">10</span></div><input type="range" id="msdSpring" min="2" max="30" step="1" value="10">
+            <div class="slider-label"><span>🛡️ Damping b (Ns/m):</span><span id="dampValDisplay">2.0</span></div><input type="range" id="msdDamping" min="0.5" max="15" step="0.5" value="2">
+            <div id="msdDynamicPlot" class="sim-graph"></div>
+            <p style="margin-top:0.5rem; background:var(--bg-secondary); padding:0.5rem; border-radius:8px;">📐 Natural Frequency ωn = <span id="wnCalc">3.16</span> rad/s | Damping Ratio ζ = <span id="zetaCalc">0.316</span></p>
+        </div>`; }
+    function renderChapter3() { return `<h2>📈 Dynamic Behavior</h2><div class="card"><h3>First Order</h3><div class="slider-label"><span>τ:</span><span id="tauValLive">1.00</span></div><input type="range" id="tauCh3" min="0.2" max="3" step="0.05" value="1"><div id="firstOrderCh3" class="sim-graph"></div></div><div class="card"><h3>Second Order</h3><div class="slider-label"><span>ζ:</span><span id="zetaValLive">0.50</span></div><input type="range" id="zetaCh3" min="0.1" max="1.5" step="0.01" value="0.5"><div class="slider-label"><span>ωn:</span><span id="wnValLive">2.00</span></div><input type="range" id="wnCh3" min="0.5" max="5" step="0.1" value="2"><div id="secondOrderCh3" class="sim-graph"></div><p id="secondOrderSpecs" style="margin-top:0.5rem; background:var(--bg-secondary); padding:0.5rem; border-radius:8px;"></p></div>`; }
+    function renderChapter4() { return `<h2>🏛️ Stability Analysis</h2><div class="card"><h3>S-Plane</h3><div id="splaneDynamic" class="sim-graph"></div><button id="randomPoleSplane">Add Random Pole</button><button id="resetPoles">Reset</button></div><div class="card"><h3>Routh-Hurwitz</h3><div class="slider-label"><span>K:</span><span id="kValShow">3.00</span></div><input type="range" id="kRouthSlider" min="0" max="12" step="0.5" value="3"><div id="routhDisplay"></div></div>`; }
+    function renderChapter5() { return `<h2>🎛️ PID Controller Tuning</h2><div class="card"><div class="slider-label"><span>Kp:</span><span id="kpValP">1.00</span></div><input type="range" id="kpPid" min="0" max="5" step="0.05" value="1"><div class="slider-label"><span>Ki:</span><span id="kiValP">0.50</span></div><input type="range" id="kiPid" min="0" max="2" step="0.02" value="0.5"><div class="slider-label"><span>Kd:</span><span id="kdValP">0.20</span></div><input type="range" id="kdPid" min="0" max="1.2" step="0.01" value="0.2"><div id="pidRespInteractive" class="sim-graph"></div><p><span id="pidMetrics">Adjust sliders to see response</span></p></div>`; }
+    function renderChapter6() { return `<h2>📊 Frequency Response</h2><div class="card"><div class="slider-label"><span>Gain K:</span><span id="gainBodeVal">1.00</span></div><input type="range" id="bodeGain" min="0.5" max="10" step="0.1" value="1"><div class="slider-label"><span>Pole -a:</span><span id="poleBodeVal">2.00</span></div><input type="range" id="bodePole" min="0.5" max="8" step="0.1" value="2"><div id="bodeMagInteractive" class="sim-graph"></div><div id="bodePhaseInteractive" class="sim-graph"></div></div><div class="card"><div class="slider-label"><span>Root Locus K:</span><span id="rlocusKval">2.00</span></div><input type="range" id="rlocusK" min="0" max="8" step="0.2" value="2"><div id="rootLocusGraph" class="sim-graph"></div></div>`; }
+    function renderAnchorLab() { return `<h2>🔬 Virtual Laboratory</h2><div class="card"><h3>Quarter Car Suspension</h3><div class="slider-label"><span>Stiffness:</span><span id="suspKval">15</span></div><input type="range" id="suspK" min="5" max="40" value="15"><div class="slider-label"><span>Damping:</span><span id="suspCval">3</span></div><input type="range" id="suspC" min="1" max="12" value="3"><div id="suspPlot" class="sim-graph"></div></div><div class="card"><h3>DC Motor</h3><div class="slider-label"><span>Voltage:</span><span id="motorVval">12</span></div><input type="range" id="motorVoltage" min="0" max="24" value="12"><div class="slider-label"><span>Load:</span><span id="motorLval">0.50</span></div><input type="range" id="motorLoad" min="0" max="1.5" step="0.05" value="0.5"><div id="motorPlot" class="sim-graph"></div></div><div class="card"><h3>Robotic Joint</h3><div class="slider-label"><span>Kp:</span><span id="jointKpval">2.5</span></div><input type="range" id="jointKp" min="0.5" max="6" step="0.1" value="2.5"><div class="slider-label"><span>Kd:</span><span id="jointKdval">0.80</span></div><input type="range" id="jointKd" min="0" max="2" step="0.05" value="0.8"><div id="jointPlot" class="sim-graph"></div></div><div class="card"><h3>Water Tank</h3><div class="slider-label"><span>Gain:</span><span id="tankGval">0.80</span></div><input type="range" id="tankGain" min="0.2" max="2" step="0.05" value="0.8"><div class="slider-label"><span>Setpoint:</span><span id="tankSpval">1.00</span></div><input type="range" id="tankSP" min="0.3" max="1.5" step="0.05" value="1.0"><div id="tankPlot" class="sim-graph"></div></div>`; }
+    function renderAbout() { return `<div class="card"><h2>About Project</h2><p><strong>Control Systems Visual Learning Platform</strong><br>Developed by: <strong>Godwin Anthony</strong><br>USN: 01FE24BAR022<br>Dept: Automation and Robotics Engineering<br>Course: 25EARC203 | AY: 2025-2026</p><p>Interactive simulations for Control Systems including root locus, Bode, PID tuning, Routh-Hurwitz, and anchor problems.</p></div>`; }
+    function renderFooter() { return `<div class="footer"><p>Godwin Anthony | USN: 01FE24BAR022 | Automation & Robotics Engg. | Control Systems (25EARC203) | AY 2025–2026</p><p><i class="fas fa-microchip"></i> Interactive Control Lab | Open Ended: Toy Train PID Control</p></div>`; }
+    
+    function renderMainContent() {
+        const mainEl = document.getElementById('mainContent');
+        let content = '';
+        switch(currentPage) { 
+            case 'home': content = renderHome(); break; 
+            case 'chapter1': content = renderChapter1(); break; 
+            case 'chapter2': content = renderChapter2(); break; 
+            case 'chapter3': content = renderChapter3(); break; 
+            case 'chapter4': content = renderChapter4(); break; 
+            case 'chapter5': content = renderChapter5(); break; 
+            case 'chapter6': content = renderChapter6(); break; 
+            case 'anchorlab': content = renderAnchorLab(); break; 
+            case 'openended': content = renderOpenEnded(); setTimeout(() => plotTrainVelocity(), 100); break;
+            case 'about': content = renderAbout(); break; 
+            default: content = renderHome(); 
+        }
+        mainEl.innerHTML = content + renderFooter();
+        
+        // CHAPTER 2 - FIXED: Live slider updates with value displays
+        if (currentPage === 'chapter2') {
+            plotPoleZero('pzPlotEnhanced', [{real:-2, imag:0}], []);
+            
+            const massSlider = document.getElementById('msdMass');
+            const springSlider = document.getElementById('msdSpring');
+            const dampingSlider = document.getElementById('msdDamping');
+            const massVal = document.getElementById('massValDisplay');
+            const springVal = document.getElementById('springValDisplay');
+            const dampVal = document.getElementById('dampValDisplay');
+            const wnSpan = document.getElementById('wnCalc');
+            const zetaSpan = document.getElementById('zetaCalc');
+            
+            function updateMSDFromSliders() {
+                const m = parseFloat(massSlider.value);
+                const k = parseFloat(springSlider.value);
+                const b = parseFloat(dampingSlider.value);
+                massVal.innerText = m.toFixed(1);
+                springVal.innerText = k;
+                dampVal.innerText = b.toFixed(1);
+                const wn = Math.sqrt(k / m);
+                const zeta = b / (2 * Math.sqrt(m * k));
+                wnSpan.innerText = wn.toFixed(2);
+                zetaSpan.innerText = zeta.toFixed(3);
+                updateMSD(m, k, b);
+            }
+            
+            massSlider.addEventListener('input', updateMSDFromSliders);
+            springSlider.addEventListener('input', updateMSDFromSliders);
+            dampingSlider.addEventListener('input', updateMSDFromSliders);
+            updateMSDFromSliders();
+            
+            document.getElementById('randomPoleBtn')?.addEventListener('click', () => plotPoleZero('pzPlotEnhanced', [{real:-1.5+Math.random()*-1, imag:1+Math.random()*1.5}], []));
+            document.getElementById('clearPZBtn')?.addEventListener('click', () => plotPoleZero('pzPlotEnhanced', [{real:-2, imag:0}], []));
+        }
+        
+        if (currentPage === 'chapter3') {
+            let tauS=document.getElementById('tauCh3'), zetaS=document.getElementById('zetaCh3'), wnS=document.getElementById('wnCh3');
+            if(tauS) tauS.oninput = () => { document.getElementById('tauValLive').innerText = parseFloat(tauS.value).toFixed(2); plotStepResponse('firstOrderCh3', parseFloat(tauS.value)); };
+            if(zetaS) zetaS.oninput = () => { 
+                document.getElementById('zetaValLive').innerText = parseFloat(zetaS.value).toFixed(2); 
+                let z = parseFloat(zetaS.value), wn = parseFloat(wnS.value);
+                plotStepResponse('secondOrderCh3', 1, z, wn);
+                let overshoot = (z < 1) ? (Math.exp(-z * Math.PI / Math.sqrt(1 - z*z)) * 100).toFixed(1) : 0;
+                let settling = (4/(z*wn)).toFixed(2);
+                document.getElementById('secondOrderSpecs').innerHTML = `📊 Overshoot: ${overshoot}% | ⏱️ Settling: ${settling}s | ⚡ Peak: ${(Math.PI/(wn*Math.sqrt(1-z*z))).toFixed(2)}s`;
+            };
+            if(wnS) wnS.oninput = () => { 
+                document.getElementById('wnValLive').innerText = parseFloat(wnS.value).toFixed(2); 
+                let z = parseFloat(zetaS.value), wn = parseFloat(wnS.value);
+                plotStepResponse('secondOrderCh3', 1, z, wn);
+                let overshoot = (z < 1) ? (Math.exp(-z * Math.PI / Math.sqrt(1 - z*z)) * 100).toFixed(1) : 0;
+                let settling = (4/(z*wn)).toFixed(2);
+                document.getElementById('secondOrderSpecs').innerHTML = `📊 Overshoot: ${overshoot}% | ⏱️ Settling: ${settling}s | ⚡ Peak: ${(Math.PI/(wn*Math.sqrt(1-z*z))).toFixed(2)}s`;
+            };
+            plotStepResponse('firstOrderCh3', 1); plotStepResponse('secondOrderCh3', 1, 0.5, 2);
+            document.getElementById('secondOrderSpecs').innerHTML = `📊 Overshoot: 16.3% | ⏱️ Settling: 4.00s | ⚡ Peak: 1.81s`;
+        }
+        if (currentPage === 'chapter4') {
+            plotPoleZero('splaneDynamic', [{real:-1.2, imag:1.5},{real:-1.2, imag:-1.5}], []);
+            let kRouth = document.getElementById('kRouthSlider');
+            if(kRouth) kRouth.oninput = () => { let K = parseFloat(kRouth.value); document.getElementById('kValShow').innerText = K.toFixed(2); renderRouthInteractive(K); };
+            renderRouthInteractive(3);
+            document.getElementById('randomPoleSplane')?.addEventListener('click', () => plotPoleZero('splaneDynamic', [{real:-0.5+Math.random()*-1.5, imag:1+Math.random()*1.5},{real:-0.5+Math.random()*-1.5, imag:-1-Math.random()*1.5}], []));
+            document.getElementById('resetPoles')?.addEventListener('click', () => plotPoleZero('splaneDynamic', [{real:-1.2, imag:1.2},{real:-1.2, imag:-1.2}], []));
+        }
+        if (currentPage === 'chapter5') {
+            let kp=document.getElementById('kpPid'), ki=document.getElementById('kiPid'), kd=document.getElementById('kdPid');
+            const updatePID=()=>{ let Kp=parseFloat(kp.value), Ki=parseFloat(ki.value), Kd=parseFloat(kd.value);
+                document.getElementById('kpValP').innerText=Kp.toFixed(2); document.getElementById('kiValP').innerText=Ki.toFixed(2); document.getElementById('kdValP').innerText=Kd.toFixed(2);
+                let t=Array.from({length:250},(_,i)=>i*0.04), integral=0, prevErr=0, out=0, y=[];
+                for(let i=0;i<t.length;i++){ let err=1-out; integral+=err*0.04; let deriv=(err-prevErr)/0.04; let u=Kp*err+Ki*integral+Kd*deriv; out+=u*0.04; y.push(Math.min(1.5,Math.max(0,out))); prevErr=err; }
+                Plotly.newPlot('pidRespInteractive',[{x:t,y:y,mode:'lines',line:{color:'#ec489a',width:3}}],{title:'PID Step Response'});
+                document.getElementById('pidMetrics').innerHTML = `Steady-State: ${y[y.length-1].toFixed(2)} | Overshoot: ${(Math.max(...y)-1).toFixed(2)}`; };
+            kp.oninput=updatePID; ki.oninput=updatePID; kd.oninput=updatePID; updatePID();
+        }
+        if (currentPage === 'chapter6') {
+            let g=document.getElementById('bodeGain'), p=document.getElementById('bodePole'), r=document.getElementById('rlocusK');
+            const updateBode=()=>{ bodePlotInteractive(parseFloat(g.value), parseFloat(p.value)); };
+            g.oninput=()=>{ document.getElementById('gainBodeVal').innerText=g.value; updateBode(); };
+            p.oninput=()=>{ document.getElementById('poleBodeVal').innerText=p.value; updateBode(); };
+            updateBode();
+            if(r) r.oninput=()=>{ document.getElementById('rlocusKval').innerText=r.value; rootLocusPlot(parseFloat(r.value)); };
+            rootLocusPlot(2);
+        }
+        if (currentPage === 'anchorlab') {
+            window.simulateSuspension(15,3); window.simulateMotor(12,0.5); window.simulateJoint(2.5,0.8); window.simulateTank(0.8,1.0);
+            let suspK=document.getElementById('suspK'), suspC=document.getElementById('suspC'), motorV=document.getElementById('motorVoltage'), motorL=document.getElementById('motorLoad'), jointKp=document.getElementById('jointKp'), jointKd=document.getElementById('jointKd'), tankG=document.getElementById('tankGain'), tankSP=document.getElementById('tankSP');
+            if(suspK) suspK.oninput=()=>{ document.getElementById('suspKval').innerText=suspK.value; window.simulateSuspension(parseFloat(suspK.value), parseFloat(suspC.value)); };
+            if(suspC) suspC.oninput=()=>{ document.getElementById('suspCval').innerText=suspC.value; window.simulateSuspension(parseFloat(suspK.value), parseFloat(suspC.value)); };
+            if(motorV) motorV.oninput=()=>{ document.getElementById('motorVval').innerText=motorV.value; window.simulateMotor(parseFloat(motorV.value), parseFloat(motorL.value)); };
+            if(motorL) motorL.oninput=()=>{ document.getElementById('motorLval').innerText=motorL.value; window.simulateMotor(parseFloat(motorV.value), parseFloat(motorL.value)); };
+            if(jointKp) jointKp.oninput=()=>{ document.getElementById('jointKpval').innerText=jointKp.value; window.simulateJoint(parseFloat(jointKp.value), parseFloat(jointKd.value)); };
+            if(jointKd) jointKd.oninput=()=>{ document.getElementById('jointKdval').innerText=jointKd.value; window.simulateJoint(parseFloat(jointKp.value), parseFloat(jointKd.value)); };
+            if(tankG) tankG.oninput=()=>{ document.getElementById('tankGval').innerText=tankG.value; window.simulateTank(parseFloat(tankG.value), parseFloat(tankSP.value)); };
+            if(tankSP) tankSP.oninput=()=>{ document.getElementById('tankSpval').innerText=tankSP.value; window.simulateTank(parseFloat(tankG.value), parseFloat(tankSP.value)); };
+        }
+    }
+    
+    window.navigateTo = navigateTo; window.toggleDark = toggleDark;
+    const appDiv = document.getElementById('root');
+    appDiv.innerHTML = `<div class="app-layout"><div class="sidebar"><div style="display:flex;justify-content:space-between;"><h3>📘 Control Lab</h3><button onclick="window.toggleDark()" style="background:none;border:none;font-size:1.2rem;"><i class="fas ${darkMode ? 'fa-sun' : 'fa-moon'}"></i></button></div>
+        ${['home','chapter1','chapter2','chapter3','chapter4','chapter5','chapter6','anchorlab','openended','about'].map(p => `<div class="nav-item" data-page="${p}" onclick="window.navigateTo('${p}')"><i class="fas ${p==='home'?'fa-home':p==='openended'?'fa-file-alt':'fa-book'}"></i> ${p.replace('chapter','Ch').toUpperCase().replace('openended','Open Ended')}</div>`).join('')}
+        <div style="margin-top:2rem;padding:1rem;border-top:1px solid var(--border);font-size:0.7rem;"><small>Godwin Anthony<br/>01FE24BAR022<br/>Automation & Robotics</small></div></div>
+        <div class="main-content"><button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')"><i class="fas fa-bars"></i> Menu</button><div id="mainContent"></div></div></div>`;
+    renderMainContent();
+});
+</script>
+</body>
+</html>
